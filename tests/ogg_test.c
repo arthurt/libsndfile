@@ -328,6 +328,66 @@ ogg_stereo_seek_test (const char * filename, int format)
 	unlink (filename) ;
 } /* ogg_stereo_seek_test */
 
+static void
+ogg_channel_map_test (void)
+{	const char *filename = "vorbis_channel_map.oga" ;
+	SNDFILE	*file ;
+	SF_INFO	sfinfo ;
+	int channel_map_valid [4] =
+	{	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_RIGHT, SF_CHANNEL_MAP_REAR_LEFT,
+		SF_CHANNEL_MAP_REAR_RIGHT
+		} ;
+	int channel_map_invalid [4] =
+	{	SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_LFE,
+		SF_CHANNEL_MAP_REAR_CENTER
+		} ;
+	int channel_map_read [4] ;
+
+	print_test_name (__func__, filename) ;
+
+	gen_windowed_sine_float (data_out.f, ARRAY_LEN (data_out.f), 0.95) ;
+
+	memset (&sfinfo, 0, sizeof (sfinfo)) ;
+	sfinfo.samplerate	= 12000 ;
+	sfinfo.format		= SF_FORMAT_OGG | SF_FORMAT_VORBIS ;
+	sfinfo.channels		= ARRAY_LEN (channel_map_valid) ;
+
+	/* Ogg Vorbis has a default channel map, even if you don't specify one. */
+
+	/* Write file without channel map. */
+	file = test_open_file_or_die (filename, SFM_WRITE, &sfinfo, SF_TRUE, __LINE__) ;
+	test_write_float_or_die (file, 0, data_out.f, ARRAY_LEN (data_out.f), __LINE__) ;
+	sf_close (file) ;
+
+	/* Read file checking that the default channel map exists. */
+	file = test_open_file_or_die (filename, SFM_READ, &sfinfo, SF_TRUE, __LINE__) ;
+	exit_if_true (
+		sf_command (file, SFC_GET_CHANNEL_MAP_INFO, channel_map_read, sizeof (channel_map_read)) == SF_FALSE,
+		"\n\nLine %d : sf_command (SFC_GET_CHANNEL_MAP_INFO) should not have failed.\n\n", __LINE__
+		) ;
+	check_log_buffer_or_die (file, __LINE__) ;
+	exit_if_true (
+		memcmp (channel_map_read, channel_map_valid, sizeof (channel_map_read)) != 0,
+		"\n\nLine %d : memcmp(channel_map_read, channel_map_valid) Returned channel map is not valid.\n\n", __LINE__
+		) ;
+	sf_close (file) ;
+
+	/* Try and set a non-supported non-supported channel map. */
+	file = test_open_file_or_die (filename, SFM_WRITE, &sfinfo, SF_TRUE, __LINE__) ;
+	exit_if_true (
+		sf_command (file, SFC_SET_CHANNEL_MAP_INFO, channel_map_invalid, sizeof (channel_map_invalid)) == SF_TRUE,
+		"\n\nLine %d : sf_command (SFC_SET_CHANNEL_MAP_INFO) with unsupported map should have failed.\n\n", __LINE__
+		) ;
+	exit_if_true (
+		memcmp (channel_map_read, channel_map_valid, sizeof (channel_map_read)) != 0,
+		"\n\nLine %d : memcmp(channel_map_read, channel_map_valid) Returned channel map is not valid.\n\n", __LINE__
+		) ;
+	test_write_float_or_die (file, 0, data_out.f, ARRAY_LEN (data_out.f), __LINE__) ;
+	sf_close (file) ;
+
+	puts ("ok") ;
+	unlink (filename) ;
+} /* ogg_channel_map_test */
 
 int
 main (void)
@@ -340,6 +400,8 @@ main (void)
 
 		/*-ogg_stereo_seek_test ("pcm.wav", SF_FORMAT_WAV | SF_FORMAT_PCM_16) ;-*/
 		ogg_stereo_seek_test ("vorbis_seek.ogg", SF_FORMAT_OGG | SF_FORMAT_VORBIS) ;
+
+		ogg_channel_map_test () ;
 		}
 	else
 		puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;

@@ -78,6 +78,7 @@
 #include <vorbis/vorbisenc.h>
 
 #include "ogg.h"
+#include "ogg_vorbiscommon.h"
 
 /* How many seconds in the future to not bother bisection searching for. */
 #define VORBIS_SEEK_THRESHOLD 2
@@ -87,6 +88,7 @@ typedef int convert_func (SF_PRIVATE *psf, int, void *, int, int, float **) ;
 static int	vorbis_read_header (SF_PRIVATE *psf) ;
 static int	vorbis_write_header (SF_PRIVATE *psf, int calc_length) ;
 static int	vorbis_close (SF_PRIVATE *psf) ;
+static void vorbis_init_channel_map (SF_PRIVATE *psf, int nchannels) ;
 static int	vorbis_command (SF_PRIVATE *psf, int command, void *data, int datasize) ;
 static int	vorbis_byterate (SF_PRIVATE *psf) ;
 static int	vorbis_calculate_granulepos (SF_PRIVATE *psf, uint64_t *gp_out) ;
@@ -452,6 +454,20 @@ vorbis_close (SF_PRIVATE *psf)
 	return 0 ;
 } /* vorbis_close */
 
+static void
+vorbis_init_channel_map (SF_PRIVATE *psf, int nchannels)
+{	const int *staticmap ;
+	size_t datasize ;
+	if (!vorbis_get_static_channel_map (nchannels, &staticmap))
+	{	datasize = sizeof (int) * nchannels ;
+		if ((psf->channel_map = malloc (datasize)) == NULL)
+		{	psf->error = SFE_MALLOC_FAILED ;
+			return ;
+			} ;
+		memcpy (psf->channel_map, staticmap, datasize) ;
+		} ;
+} /* vorbis_init_channel_map */
+
 int
 ogg_vorbis_open (SF_PRIVATE *psf)
 {	OGG_PRIVATE* odata = psf->container_data ;
@@ -506,6 +522,8 @@ ogg_vorbis_open (SF_PRIVATE *psf)
 	psf->sf.format = SF_FORMAT_OGG | SF_FORMAT_VORBIS ;
 	psf->sf.sections = 1 ;
 
+	vorbis_init_channel_map (psf, psf->sf.channels) ;
+
 	return error ;
 } /* ogg_vorbis_open */
 
@@ -528,6 +546,27 @@ vorbis_command (SF_PRIVATE *psf, int command, void * data, int datasize)
 
 			psf_log_printf (psf, "%s : Setting SFC_SET_VBR_ENCODING_QUALITY to %f.\n", __func__, vdata->quality) ;
 			return SF_TRUE ;
+
+		case SFC_SET_CHANNEL_MAP_INFO :
+			/* sf_command() has already checked that we have not written,
+			 * validated the map length and values, and allocated a new map and
+			 * assigned it to psf->channel_map. We just say yay or nay, except
+			 * in the nay case we have to restore the original map. */
+
+			/* Vorbis-I only supports static channel maps. */
+			if (vorbis_equals_static_channel_map (psf->sf.channels, psf->channel_map))
+				return SF_TRUE ;
+
+			free (psf->channel_map) ;
+			psf->channel_map = NULL ;
+			vorbis_init_channel_map (psf, psf->sf.channels) ;
+			return SF_FALSE ;
+
+		// TODO
+		case SFC_SET_OGG_PAGE_LATENCY :
+		case SFC_SET_BITRATE_MODE :
+		case SFC_GET_BITRATE_MODE :
+			return SF_FALSE ;
 
 		default :
 			return SF_FALSE ;
@@ -606,7 +645,6 @@ vorbis_rdouble (SF_PRIVATE *UNUSED (psf), int samples, void *vptr, int off, int 
 			ptr [i++] = pcm [n][j] ;
 	return i ;
 } /* vorbis_rdouble */
-
 
 static sf_count_t
 vorbis_read_sample (SF_PRIVATE *psf, void *ptr, sf_count_t lens, convert_func *transfn)
@@ -718,7 +756,6 @@ vorbis_write_samples (SF_PRIVATE *psf, OGG_PRIVATE *odata, VORBIS_PRIVATE *vdata
 
 	vdata->gp += in_frames ;
 } /* vorbis_write_data */
-
 
 static sf_count_t
 vorbis_write_s (SF_PRIVATE *psf, const short *ptr, sf_count_t lens)
@@ -950,6 +987,8 @@ vorbis_byterate (SF_PRIVATE *psf)
 {
 	if (psf->file.mode == SFM_READ)
 		return (psf->datalength * psf->sf.samplerate) / psf->sf.frames ;
+
+	// TODO: return encoding average byterate */
 
 	return -1 ;
 } /* vorbis_byterate */
