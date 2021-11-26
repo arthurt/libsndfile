@@ -341,8 +341,8 @@ add_library (sndfile
 	src/ogg_speex.c
 	src/ogg_pcm.c
 	src/ogg_opus.c
-	src/ogg_vcomment.h
-	src/ogg_vcomment.c
+	src/ogg_vorbiscommon.h
+	src/ogg_vorbiscommon.c
 	src/nms_adpcm.c
 	src/mpeg.c
 	src/mpeg_decode.c

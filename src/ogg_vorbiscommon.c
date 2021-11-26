@@ -1,6 +1,6 @@
 /*
+** Copyright (C) 2018-2021 Arthur Taylor <art@ified.ca>
 ** Copyright (C) 2008-2019 Erik de Castro Lopo <erikd@mega-nerd.com>
-** Copyright (C) 2018 Arthur Taylor <art@ified.ca>
 **
 ** This program is free software ; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -31,7 +31,7 @@
 
 #include <ogg/ogg.h>
 
-#include "ogg_vcomment.h"
+#include "ogg_vorbiscommon.h"
 
 typedef struct
 {	int id ;

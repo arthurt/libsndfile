@@ -166,7 +166,7 @@
 #include <opus/opus_multistream.h>
 
 #include "ogg.h"
-#include "ogg_vcomment.h"
+#include "ogg_vorbiscommon.h"
 
 #define OGG_OPUS_COMMENT_PAD (512) /* Same as oggenc default */
 

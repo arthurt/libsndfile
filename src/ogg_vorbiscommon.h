@@ -1,6 +1,6 @@
 /*
+** Copyright (C) 2018-2021 Arthur Taylor <art@ified.ca>
 ** Copyright (C) 2008-2018 Erik de Castro Lopo <erikd@mega-nerd.com>
-** Copyright (C) 2018 Arthur Taylor <art@ified.ca>
 **
 ** This program is free software ; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,13 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#ifndef SF_SRC_OGG_VCOMMENT_H
-#define SF_SRC_OGG_VCOMMENT_H
+#ifndef SF_SRC_OGG_VORBISCOMMON_H
+#define SF_SRC_OGG_VORBISCOMMON_H
+
+/*
+** Routines for data structures which originated in the Vorbis specification
+** that have been used by other Ogg encapsulated formats (Speex, Opus).
+*/
 
 /*
 ** Voriscomment identifier. Some Ogg stream embedding schemes require it.
@@ -42,4 +47,4 @@ int vorbiscomment_read_tags (SF_PRIVATE *psf, ogg_packet *packet, vorbiscomment_
 */
 int vorbiscomment_write_tags (SF_PRIVATE *psf, ogg_packet *packet, vorbiscomment_ident *ident, const char *vendor, int targetsize) ;
 
-#endif /* SF_SRC_OGG_VCOMMENT_H */
+#endif /* SF_SRC_OGG_VORBISCOMMON_H */
