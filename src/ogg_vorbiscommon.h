@@ -47,4 +47,18 @@ int vorbiscomment_read_tags (SF_PRIVATE *psf, ogg_packet *packet, vorbiscomment_
 */
 int vorbiscomment_write_tags (SF_PRIVATE *psf, ogg_packet *packet, vorbiscomment_ident *ident, const char *vendor, int targetsize) ;
 
+/*
+** Get the Vorbis type 0 static channel map for nchannels. Returns 0 on
+** success, setting out to point at the beginning of an array of nchannels
+** integers of SF_CHANNEL_MAP_X values. Returns -1 on invalid channel count.
+*/
+int vorbis_get_static_channel_map (int nchannels, const int **out) ;
+
+/*
+** Checks if the channel map of length nchannels map passed is equivelant to
+** the static vorbis type 0 channel map for the same channel count. Returns
+** SF_TRUE or SF_FALSE.
+*/
+int vorbis_equals_static_channel_map (int nchannels, const int *map) ;
+
 #endif /* SF_SRC_OGG_VORBISCOMMON_H */

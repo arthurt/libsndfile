@@ -53,6 +53,41 @@ static STR_PAIR vorbiscomment_mapping [] =
 	{	0,					NULL,			},
 } ;
 
+/* Vorbis channel map type 0: static channel map */
+static const int vorbis_static_channel_map[] = {
+	/* 1-channel: Monophonic */
+	SF_CHANNEL_MAP_MONO,
+
+	/* 2-channel: Stereophonic */
+	SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+
+	/* 3-channel: 1-d surround */
+	SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_RIGHT,
+
+	/* 4-channel: Quadraphonic */
+	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_RIGHT,
+	SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT,
+
+	/* 5-channels: 5 surround */
+	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_CENTER, SF_CHANNEL_MAP_FRONT_RIGHT,
+	SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT,
+
+	/* 6-channels: 5.1 surround */
+	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_CENTER, SF_CHANNEL_MAP_FRONT_RIGHT,
+	SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT, SF_CHANNEL_MAP_LFE,
+
+	/* 7-channels: 6.1 surround */
+	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_CENTER, SF_CHANNEL_MAP_FRONT_RIGHT,
+	SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT,
+	SF_CHANNEL_MAP_REAR_CENTER, SF_CHANNEL_MAP_LFE,
+
+	/* 8-channels: 7.1 surround */
+	SF_CHANNEL_MAP_FRONT_LEFT, SF_CHANNEL_MAP_FRONT_CENTER, SF_CHANNEL_MAP_FRONT_RIGHT,
+	SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT,
+	SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT, SF_CHANNEL_MAP_LFE
+};
+
+
 /*-----------------------------------------------------------------------------------------------
 ** Private function prototypes.
 */
@@ -245,6 +280,25 @@ vorbiscomment_write_tags (SF_PRIVATE *psf, ogg_packet *packet, vorbiscomment_ide
 
 	return 0 ;
 } /* vorbiscomment_write_tags */
+
+int vorbis_get_static_channel_map (int nchannels, const int **out)
+{	if (nchannels < 1 || nchannels > 8)
+		return -1 ;
+	*out = &vorbis_static_channel_map [((nchannels-1) * (2 + (nchannels-2))) / 2] ;
+	return 0 ;
+} /* vorbis_get_static_channel_map */
+
+int vorbis_equals_static_channel_map (int nchannels, const int *map)
+{	const int *stmap ;
+	int ret ;
+
+	ret = vorbis_get_static_channel_map (nchannels, &stmap) ;
+	if (ret)
+		return SF_FALSE ;
+	ret = memcmp (map, stmap, nchannels * sizeof (int)) ;
+
+	return ret == 0 ? SF_TRUE : SF_FALSE ;
+} /* vorbis_equals_static_channel_map */
 
 /*==============================================================================
 ** Private functions.
